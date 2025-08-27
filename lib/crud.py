@@ -91,3 +91,26 @@ def create_book(session, title, publication_year, genre, author_id, publisher_id
     except IntegrityError:
         session.rollback()
         raise ValueError("Book title must be unique.")
+
+def delete_book(session, id):
+    book = find_book_by_id(session, id)
+    if book:
+        session.delete(book)
+        session.commit()
+        return True
+    return False
+
+def get_all_books(session):
+    return session.query(Book).all()
+
+def find_book_by_id(session, id):
+    return session.query(Book).filter_by(id=id).first()
+
+def find_book_by_title(session, title):
+    return session.query(Book).filter_by(title=title).first()
+
+def get_book_relations(session, book_id):
+    book = find_book_by_id(session, book_id)
+    if book:
+        return book.author, book.publisher
+    return None, None
