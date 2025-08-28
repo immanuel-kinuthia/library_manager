@@ -98,3 +98,38 @@ ENTITY_CRUD = {
         "list_related": get_book_relations
     }
 }
+
+def list_entity(session, entity_type):
+    """List all entities of a given type."""
+    entities = ENTITY_CRUD[entity_type]["list"](session)
+    if not entities:
+        click.echo(f"No {entity_type}s found.")
+        return
+    click.echo(f"\n--- All {entity_type.title()}s ---")
+    for e in entities:
+        if entity_type == "author":
+            click.echo(f"{e.id}. {e.full_name} - Birth Year: {e.birth_year}, Nationality: {e.nationality}")
+        elif entity_type == "publisher":
+            click.echo(f"{e.id}. {e.name} - Founded: {e.founded_year}, Location: {e.location}, Website: {e.website or 'N/A'}")
+        else:  # book
+            author = find_author_by_id(session, e.author_id)
+            publisher = find_publisher_by_id(session, e.publisher_id)
+            click.echo(f"{e.id}. {e.title} - Year: {e.publication_year}, Genre: {e.genre}, "
+                       f"Author: {author.full_name if author else 'Unknown'}, Publisher: {publisher.name if publisher else 'Unknown'}")
+
+def run_menu(session, menu_type, menu_options, entity_type=None):
+    """Generic menu handler for main or entity menus."""
+    while True:
+        click.echo(f"\n--- {menu_type} ---")
+        for i, (option, _) in enumerate(menu_options, 1):
+            click.echo(f"{i}. {option}")
+        choice = click.prompt("Enter choice", type=click.Choice([str(i) for i in range(1, len(menu_options) + 1)]), show_choices=False)
+        choice = int(choice) - 1
+        if menu_options[choice][1] == "exit":
+            return "exit"
+        elif menu_options[choice][1] == "back":
+            return None
+        elif entity_type:
+            handle_entity_action(session, entity_type, choice)
+        else:
+            return menu_options[choice][1]
