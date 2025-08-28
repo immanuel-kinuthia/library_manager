@@ -133,3 +133,18 @@ def run_menu(session, menu_type, menu_options, entity_type=None):
             handle_entity_action(session, entity_type, choice)
         else:
             return menu_options[choice][1]
+
+def handle_entity_action(session, entity_type, choice):
+    """Handle entity-specific actions based on menu choice."""
+    if choice == 0:  # Add new
+        fields = {f[0]: click.prompt(f[1], type=f[2], default=f[3]) for f in ENTITY_FIELDS[entity_type]}
+        try:
+            if entity_type == "book":
+                list_entity(session, "author")
+                list_entity(session, "publisher")
+            entity = ENTITY_CRUD[entity_type]["create"](session, **fields)
+            click.echo(f"{entity_type.title()} '{getattr(entity, 'full_name', getattr(entity, 'name', entity.title))}' added successfully!")
+        except ValueError as e:
+            click.echo(f"Error: {e}")
+    elif choice == 1:  # List all
+        list_entity(session, entity_type)
