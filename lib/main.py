@@ -148,3 +148,21 @@ def handle_entity_action(session, entity_type, choice):
             click.echo(f"Error: {e}")
     elif choice == 1:  # List all
         list_entity(session, entity_type)
+    elif choice == 2:  # Update
+        list_entity(session, entity_type)
+        entity_id = click.prompt(f"Enter {entity_type.title()} ID to update", type=int)
+        entity = ENTITY_CRUD[entity_type]["find_by_id"](session, entity_id)
+        if not entity:
+            click.echo(f"{entity_type.title()} not found.")
+            return
+        fields = {f[0]: click.prompt(f"{f[1]} [{getattr(entity, f[0], 'N/A')}]", type=f[2], default=getattr(entity, f[0])) for f in ENTITY_FIELDS[entity_type]}
+        try:
+            if entity_type == "book":
+                list_entity(session, "author")
+                list_entity(session, "publisher")
+            for key, value in fields.items():
+                setattr(entity, key, value)
+            session.commit()
+            click.echo(f"{entity_type.title()} '{getattr(entity, 'full_name', getattr(entity, 'name', entity.title))}' updated successfully!")
+        except ValueError as e:
+            click.echo(f"Error: {e}")
