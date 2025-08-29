@@ -121,18 +121,36 @@ def run_menu(session, menu_type, menu_options, entity_type=None):
     """Generic menu handler for main or entity menus."""
     while True:
         click.echo(f"\n--- {menu_type} ---")
-        for i, (option, _) in enumerate(menu_options, 1):
-            click.echo(f"{i}. {option}")
-        choice = click.prompt("Enter choice", type=click.Choice([str(i) for i in range(1, len(menu_options) + 1)]), show_choices=False)
+
+        # Display menu differently depending on structure
+        for i, option in enumerate(menu_options, 1):
+            if isinstance(option, tuple):  # e.g. ("Manage Authors", "author")
+                click.echo(f"{i}. {option[0]}")
+            else:  # just a string, e.g. "Add new author"
+                click.echo(f"{i}. {option}")
+
+        choice = click.prompt(
+            "Enter choice",
+            type=click.Choice([str(i) for i in range(1, len(menu_options) + 1)]),
+            show_choices=False
+        )
         choice = int(choice) - 1
-        if menu_options[choice][1] == "exit":
-            return "exit"
-        elif menu_options[choice][1] == "back":
-            return None
-        elif entity_type:
-            handle_entity_action(session, entity_type, choice)
+
+        # Handle choice
+        if isinstance(menu_options[choice], tuple):
+            if menu_options[choice][1] == "exit":
+                return "exit"
+            elif menu_options[choice][1] == "back":
+                return None
+            elif entity_type:
+                handle_entity_action(session, entity_type, choice)
+            else:
+                return menu_options[choice][1]
         else:
-            return menu_options[choice][1]
+            # For entity menus, just run the action
+            if menu_options[choice].lower().startswith("back"):
+                return None
+            handle_entity_action(session, entity_type, choice)
 
 def handle_entity_action(session, entity_type, choice):
     """Handle entity-specific actions based on menu choice."""
