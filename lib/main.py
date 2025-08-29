@@ -173,3 +173,18 @@ def handle_entity_action(session, entity_type, choice):
             click.echo(f"{entity_type.title()} deleted successfully!")
         else:
             click.echo(f"{entity_type.title()} not found.")
+    elif choice == 4:  # Find by ID
+        entity_id = click.prompt(f"Enter {entity_type.title()} ID", type=int)
+        entity = ENTITY_CRUD[entity_type]["find_by_id"](session, entity_id)
+        if entity:
+            if entity_type == "author":
+                click.echo(f"{entity.id}. {entity.full_name} - Birth Year: {entity.birth_year}, Nationality: {entity.nationality}")
+            elif entity_type == "publisher":
+                click.echo(f"{entity.id}. {entity.name} - Founded: {entity.founded_year}, Location: {entity.location}, Website: {entity.website or 'N/A'}")
+            else:  # book
+                author = find_author_by_id(session, entity.author_id)
+                publisher = find_publisher_by_id(session, entity.publisher_id)
+                click.echo(f"{entity.id}. {entity.title} - Year: {entity.publication_year}, Genre: {entity.genre}, "
+                           f"Author: {author.full_name if author else 'Unknown'}, Publisher: {publisher.name if publisher else 'Unknown'}")
+        else:
+            click.echo(f"{entity_type.title()} not found.")
