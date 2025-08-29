@@ -36,7 +36,8 @@ This is a Python CLI application for managing a library's authors, publishers, a
 Edit `alembic/env.py` to include:
 ```python
 from lib.models import Base, Author, Publisher, Book
-target_metadata = Base.metadat
+target_metadata = Base.metadata
+```
 
 ## Usage
 
