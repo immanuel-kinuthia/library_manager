@@ -99,6 +99,14 @@ ENTITY_CRUD = {
     }
 }
 
+def get_entity_label(entity):
+    """Return a display-friendly label for any entity."""
+    return getattr(
+        entity,
+        "full_name",
+        getattr(entity, "name", getattr(entity, "title", "Unknown"))
+    )
+
 def list_entity(session, entity_type):
     """List all entities of a given type."""
     entities = ENTITY_CRUD[entity_type]["list"](session)
@@ -122,11 +130,11 @@ def run_menu(session, menu_type, menu_options, entity_type=None):
     while True:
         click.echo(f"\n--- {menu_type} ---")
 
-        # Display menu differently depending on structure
+        # Display menu items safely
         for i, option in enumerate(menu_options, 1):
-            if isinstance(option, tuple):  # e.g. ("Manage Authors", "author")
+            if isinstance(option, tuple):  # MAIN_MENU
                 click.echo(f"{i}. {option[0]}")
-            else:  # just a string, e.g. "Add new author"
+            else:  # ENTITY_MENUS
                 click.echo(f"{i}. {option}")
 
         choice = click.prompt(
@@ -136,7 +144,6 @@ def run_menu(session, menu_type, menu_options, entity_type=None):
         )
         choice = int(choice) - 1
 
-        # Handle choice
         if isinstance(menu_options[choice], tuple):
             if menu_options[choice][1] == "exit":
                 return "exit"
@@ -147,7 +154,6 @@ def run_menu(session, menu_type, menu_options, entity_type=None):
             else:
                 return menu_options[choice][1]
         else:
-            # For entity menus, just run the action
             if menu_options[choice].lower().startswith("back"):
                 return None
             handle_entity_action(session, entity_type, choice)
@@ -161,7 +167,7 @@ def handle_entity_action(session, entity_type, choice):
                 list_entity(session, "author")
                 list_entity(session, "publisher")
             entity = ENTITY_CRUD[entity_type]["create"](session, **fields)
-            click.echo(f"{entity_type.title()} '{getattr(entity, 'full_name', getattr(entity, 'name', entity.title))}' added successfully!")
+            click.echo(f"{entity_type.title()} '{get_entity_label(entity)}' added successfully!")
         except ValueError as e:
             click.echo(f"Error: {e}")
     elif choice == 1:  # List all
@@ -181,7 +187,7 @@ def handle_entity_action(session, entity_type, choice):
             for key, value in fields.items():
                 setattr(entity, key, value)
             session.commit()
-            click.echo(f"{entity_type.title()} '{getattr(entity, 'full_name', getattr(entity, 'name', entity.title))}' updated successfully!")
+            click.echo(f"{entity_type.title()} '{get_entity_label(entity)}' updated successfully!")
         except ValueError as e:
             click.echo(f"Error: {e}")
     elif choice == 3:  # Delete
@@ -232,14 +238,14 @@ def handle_entity_action(session, entity_type, choice):
         if entity_type == "book":
             author, publisher = ENTITY_CRUD[entity_type]["list_related"](session, entity_id)
             click.echo(f"\n--- Details for {entity.title} ---")
-            click.echo(f"Author: {author.full_name if author else 'Unknown'}")
-            click.echo(f"Publisher: {publisher.name if publisher else 'Unknown'}")
+            click.echo(f"Author: {get_entity_label(author) if author else 'Unknown'}")
+            click.echo(f"Publisher: {get_entity_label(publisher) if publisher else 'Unknown'}")
         else:
             books = ENTITY_CRUD[entity_type]["list_related"](session, entity_id)
             if not books:
-                click.echo(f"No books found for {getattr(entity, 'full_name', entity.name)}.")
+                click.echo(f"No books found for {get_entity_label(entity)}.")
                 return
-            click.echo(f"\n--- Books by {getattr(entity, 'full_name', entity.name)} ---")
+            click.echo(f"\n--- Books by {get_entity_label(entity)} ---")
             for book in books:
                 click.echo(f"{book.id}. {book.title} - Year: {book.publication_year}, Genre: {book.genre}")
 
