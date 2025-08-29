@@ -204,3 +204,23 @@ def handle_entity_action(session, entity_type, choice):
                            f"Author: {author.full_name if author else 'Unknown'}, Publisher: {publisher.name if publisher else 'Unknown'}")
         else:
             click.echo(f"{entity_type.title()} not found.")
+    elif choice == 6:  # List related (books for author/publisher, author/publisher for book)
+        list_entity(session, entity_type)
+        entity_id = click.prompt(f"Enter {entity_type.title()} ID to view related", type=int)
+        entity = ENTITY_CRUD[entity_type]["find_by_id"](session, entity_id)
+        if not entity:
+            click.echo(f"{entity_type.title()} not found.")
+            return
+        if entity_type == "book":
+            author, publisher = ENTITY_CRUD[entity_type]["list_related"](session, entity_id)
+            click.echo(f"\n--- Details for {entity.title} ---")
+            click.echo(f"Author: {author.full_name if author else 'Unknown'}")
+            click.echo(f"Publisher: {publisher.name if publisher else 'Unknown'}")
+        else:
+            books = ENTITY_CRUD[entity_type]["list_related"](session, entity_id)
+            if not books:
+                click.echo(f"No books found for {getattr(entity, 'full_name', entity.name)}.")
+                return
+            click.echo(f"\n--- Books by {getattr(entity, 'full_name', entity.name)} ---")
+            for book in books:
+                click.echo(f"{book.id}. {book.title} - Year: {book.publication_year}, Genre: {book.genre}")
