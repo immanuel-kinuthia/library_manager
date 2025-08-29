@@ -224,3 +224,21 @@ def handle_entity_action(session, entity_type, choice):
             click.echo(f"\n--- Books by {getattr(entity, 'full_name', entity.name)} ---")
             for book in books:
                 click.echo(f"{book.id}. {book.title} - Year: {book.publication_year}, Genre: {book.genre}")
+
+@click.command()
+def main():
+    """Library Management System CLI"""
+    session = Session()
+    try:
+        while True:
+            result = run_menu(session, "Library Management CLI", MAIN_MENU)
+            if result == "exit":
+                click.echo("Exiting... Goodbye!")
+                break
+            elif result:
+                run_menu(session, f"{result.title()} Menu", ENTITY_MENUS[result], result)
+    finally:
+        session.close()
+
+if __name__ == "__main__":
+    main()
